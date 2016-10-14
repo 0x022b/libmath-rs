@@ -1,0 +1,14 @@
+[package]
+name = "libmath"
+version = "0.1.0"
+authors = ["Janne K <0x022b@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/scoobadog/libmath-rs"
+description = "Mathematical utilities"
+keywords = ["round", "rounding"]
+
+[lib]
+name = "math"
+
+[dependencies]
+rand = "0.3"
