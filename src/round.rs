@@ -1,6 +1,7 @@
 //! Rounding functions
 
 extern crate rand;
+use std::f64::NAN;
 
 /// Round up.
 ///
@@ -202,6 +203,12 @@ pub fn stochastic(value: f64, scale: u8) -> f64 {
 }
 
 fn decimal_after_scale(value: f64, scale: u8) -> f64 {
+	if value.is_nan() {
+		return NAN;
+	}
+	if value.is_infinite() {
+		return 0.;
+	}
 	let x = (value * 10i64.pow(scale as u32 + 1) as f64) as i64;
 	let y = (value * 10i64.pow(scale as u32) as f64) as i64 * 10;
 	((x - y).abs() as f64 / 10.0)
@@ -249,6 +256,7 @@ fn up_or_down(value: f64, scale: u8, up: bool) -> f64 {
 
 #[cfg(test)]
 mod tests {
+	use std::f64::{ NAN, INFINITY, NEG_INFINITY };
 	use std::f64::consts::PI;
 
 	#[test]
@@ -275,10 +283,21 @@ mod tests {
 			(PI, 7, 3.1415927),
 			(PI, 8, 3.14159266),
 			(PI, 9, 3.141592654),
+
+			(NAN, 0, NAN),
+			(NAN, 9, NAN),
+			(NEG_INFINITY, 0, NEG_INFINITY),
+			(NEG_INFINITY, 9, NEG_INFINITY),
+			(INFINITY, 0, INFINITY),
+			(INFINITY, 9, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::ceil(test.0, test.1), test.2);
+			let result = super::ceil(test.0, test.1);
+			match result.is_nan() {
+				true => assert_eq!(test.2.is_nan(), true),
+				false => assert_eq!(result, test.2),
+			}
 		}
 	}
 
@@ -306,10 +325,18 @@ mod tests {
 			(1.1234567890, 7, 0.8),
 			(1.1234567890, 8, 0.9),
 			(1.1234567890, 9, 0.0),
+
+			(NAN, 0, NAN),
+			(NEG_INFINITY, 0, 0.),
+			(INFINITY, 0, 0.),
 		];
 
 		for test in &tests {
-			assert_eq!(super::decimal_after_scale(test.0, test.1), test.2);
+			let result = super::decimal_after_scale(test.0, test.1);
+			match result.is_nan() {
+				true => assert_eq!(test.2.is_nan(), true),
+				false => assert_eq!(result, test.2),
+			}
 		}
 	}
 
@@ -333,10 +360,21 @@ mod tests {
 			(1.6, 0, false, 2.0),
 			(2.5, 0, true, 2.0),
 			(2.5, 0, false, 3.0),
+
+			(NAN, 0, true, NAN),
+			(NAN, 0, false, NAN),
+			(NEG_INFINITY, 0, true, NEG_INFINITY),
+			(NEG_INFINITY, 0, false, NEG_INFINITY),
+			(INFINITY, 0, true, INFINITY),
+			(INFINITY, 0, false, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::even_or_odd(test.0, test.1, test.2), test.3);
+			let result = super::even_or_odd(test.0, test.1, test.2);
+			match result.is_nan() {
+				true => assert_eq!(test.3.is_nan(), true),
+				false => assert_eq!(result, test.3),
+			}
 		}
 	}
 
@@ -364,10 +402,21 @@ mod tests {
 			(PI, 7, 3.1415926),
 			(PI, 8, 3.14159265),
 			(PI, 9, 3.141592653),
+
+			(NAN, 0, NAN),
+			(NAN, 9, NAN),
+			(NEG_INFINITY, 0, NEG_INFINITY),
+			(NEG_INFINITY, 9, NEG_INFINITY),
+			(INFINITY, 0, INFINITY),
+			(INFINITY, 9, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::floor(test.0, test.1), test.2);
+			let result = super::floor(test.0, test.1);
+			match result.is_nan() {
+				true => assert_eq!(test.2.is_nan(), true),
+				false => assert_eq!(result, test.2),
+			}
 		}
 	}
 
@@ -383,10 +432,18 @@ mod tests {
 			(0.5, 0, 1.0),
 			(1.5, 0, 2.0),
 			(1.7, 0, 2.0),
+
+			(NAN, 0, NAN),
+			(NEG_INFINITY, 0, NEG_INFINITY),
+			(INFINITY, 0, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::half_away_from_zero(test.0, test.1), test.2);
+			let result = super::half_away_from_zero(test.0, test.1);
+			match result.is_nan() {
+				true => assert_eq!(test.2.is_nan(), true),
+				false => assert_eq!(result, test.2),
+			}
 		}
 	}
 
@@ -402,10 +459,18 @@ mod tests {
 			(0.5, 0, 0.0),
 			(1.5, 0, 1.0),
 			(1.7, 0, 2.0),
+
+			(NAN, 0, NAN),
+			(NEG_INFINITY, 0, NEG_INFINITY),
+			(INFINITY, 0, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::half_down(test.0, test.1), test.2);
+			let result = super::half_down(test.0, test.1);
+			match result.is_nan() {
+				true => assert_eq!(test.2.is_nan(), true),
+				false => assert_eq!(result, test.2),
+			}
 		}
 	}
 
@@ -421,10 +486,18 @@ mod tests {
 			(0.5, 0, 0.0),
 			(1.5, 0, 2.0),
 			(1.7, 0, 2.0),
+
+			(NAN, 0, NAN),
+			(NEG_INFINITY, 0, NEG_INFINITY),
+			(INFINITY, 0, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::half_to_even(test.0, test.1), test.2);
+			let result = super::half_to_even(test.0, test.1);
+			match result.is_nan() {
+				true => assert_eq!(test.2.is_nan(), true),
+				false => assert_eq!(result, test.2),
+			}
 		}
 	}
 
@@ -440,10 +513,18 @@ mod tests {
 			(0.5, 0, 1.0),
 			(1.5, 0, 1.0),
 			(1.7, 0, 2.0),
+
+			(NAN, 0, NAN),
+			(NEG_INFINITY, 0, NEG_INFINITY),
+			(INFINITY, 0, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::half_to_odd(test.0, test.1), test.2);
+			let result = super::half_to_odd(test.0, test.1);
+			match result.is_nan() {
+				true => assert_eq!(test.2.is_nan(), true),
+				false => assert_eq!(result, test.2),
+			}
 		}
 	}
 
@@ -459,10 +540,18 @@ mod tests {
 			(0.5, 0, 0.0),
 			(1.5, 0, 1.0),
 			(1.7, 0, 2.0),
+
+			(NAN, 0, NAN),
+			(NEG_INFINITY, 0, NEG_INFINITY),
+			(INFINITY, 0, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::half_towards_zero(test.0, test.1), test.2);
+			let result = super::half_towards_zero(test.0, test.1);
+			match result.is_nan() {
+				true => assert_eq!(test.2.is_nan(), true),
+				false => assert_eq!(result, test.2),
+			}
 		}
 	}
 
@@ -478,10 +567,18 @@ mod tests {
 			(0.5, 0, 1.0),
 			(1.5, 0, 2.0),
 			(1.7, 0, 2.0),
+
+			(NAN, 0, NAN),
+			(NEG_INFINITY, 0, NEG_INFINITY),
+			(INFINITY, 0, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::half_up(test.0, test.1), test.2);
+			let result = super::half_up(test.0, test.1);
+			match result.is_nan() {
+				true => assert_eq!(test.2.is_nan(), true),
+				false => assert_eq!(result, test.2),
+			}
 		}
 	}
 
@@ -501,10 +598,21 @@ mod tests {
 			(1.5, 0, false, 1.0),
 			(1.6, 0, true, 2.0),
 			(1.6, 0, false, 1.0),
+
+			(NAN, 0, true, NAN),
+			(NAN, 0, false, NAN),
+			(NEG_INFINITY, 0, true, NEG_INFINITY),
+			(NEG_INFINITY, 0, false, NEG_INFINITY),
+			(INFINITY, 0, true, INFINITY),
+			(INFINITY, 0, false, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::round(test.0, test.1, test.2), test.3);
+			let result = super::round(test.0, test.1, test.2);
+			match result.is_nan() {
+				true => assert_eq!(test.3.is_nan(), true),
+				false => assert_eq!(result, test.3),
+			}
 		}
 	}
 
@@ -516,10 +624,21 @@ mod tests {
 
 			(1.4, 0, 0.4, 1.0),
 			(1.6, 0, 0.6, 2.0),
+
+			(NAN, 0, 0.4, NAN),
+			(NAN, 0, 0.6, NAN),
+			(NEG_INFINITY, 0, 0.4, NEG_INFINITY),
+			(NEG_INFINITY, 0, 0.6, NEG_INFINITY),
+			(INFINITY, 0, 0.4, INFINITY),
+			(INFINITY, 0, 0.6, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::to_nearest(test.0, test.1, test.2), test.3);
+			let result = super::to_nearest(test.0, test.1, test.2);
+			match result.is_nan() {
+				true => assert_eq!(test.3.is_nan(), true),
+				false => assert_eq!(result, test.3),
+			}
 		}
 	}
 
@@ -539,10 +658,21 @@ mod tests {
 			(1.5, 0, false, 2.0),
 			(1.6, 0, true, 2.0),
 			(1.6, 0, false, 2.0),
+
+			(NAN, 0, true, NAN),
+			(NAN, 0, false, NAN),
+			(NEG_INFINITY, 0, true, NEG_INFINITY),
+			(NEG_INFINITY, 0, false, NEG_INFINITY),
+			(INFINITY, 0, true, INFINITY),
+			(INFINITY, 0, false, INFINITY),
 		];
 
 		for test in &tests {
-			assert_eq!(super::towards_zero(test.0, test.1, test.2), test.3);
+			let result = super::towards_zero(test.0, test.1, test.2);
+			match result.is_nan() {
+				true => assert_eq!(test.3.is_nan(), true),
+				false => assert_eq!(result, test.3),
+			}
 		}
 	}
 }
