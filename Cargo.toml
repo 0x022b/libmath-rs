@@ -1,11 +1,11 @@
 [package]
 name = "libmath"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Janne K <0x022b@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/scoobadog/libmath-rs"
 description = "Mathematical utilities"
-keywords = ["round", "rounding"]
+keywords = ["mean", "round", "rounding"]
 
 [lib]
 name = "math"
