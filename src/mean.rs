@@ -1,5 +1,4 @@
 //! Functions for calculating mean
-
 use std::f64::NAN;
 
 /// Calculates arithmetic mean (AM) of data set `slice`.

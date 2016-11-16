@@ -1,5 +1,4 @@
 //! Rounding functions
-
 extern crate rand;
 
 /// Round up.
