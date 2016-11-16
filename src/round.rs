@@ -1,7 +1,5 @@
 //! Rounding functions
-
 extern crate rand;
-use std::f64::NAN;
 
 /// Round up.
 ///
@@ -198,28 +196,15 @@ pub fn half_up(value: f64, scale: u8) -> f64 {
 /// assert_eq!(rounded == 3.141 || rounded == 3.142, true);
 /// ```
 pub fn stochastic(value: f64, scale: u8) -> f64 {
-	let decimal = decimal_after_scale(value, scale);
-	to_nearest(value, scale, decimal)
-}
-
-fn decimal_after_scale(value: f64, scale: u8) -> f64 {
-	if value.is_nan() {
-		return NAN;
-	}
-	if value.is_infinite() {
-		return 0.;
-	}
-	let x = (value * 10i64.pow(scale as u32 + 1) as f64) as i64;
-	let y = (value * 10i64.pow(scale as u32) as f64) as i64 * 10;
-	((x - y).abs() as f64 / 10.0)
+	let digits = significant_digits(value, scale);
+	to_nearest(value, scale, digits.1)
 }
 
 fn even_or_odd(value: f64, scale: u8, even: bool) -> f64 {
-	let decimal = decimal_after_scale(value, scale);
-	match decimal == 0.5 {
-		true => round(value, scale,
-			(value < 0.0) ^ even ^ (value as i32 % 2 == 0)),
-		false => to_nearest(value, scale, decimal),
+	let digits = significant_digits(value, scale);
+	match digits.1 == 5 {
+		true => round(value, scale, (value < 0.) ^ even ^ (digits.0 % 2 == 0)),
+		false => to_nearest(value, scale, digits.1),
 	}
 }
 
@@ -230,69 +215,78 @@ fn round(value: f64, scale: u8, up: bool) -> f64 {
 	}
 }
 
-fn to_nearest(value: f64, scale: u8, decimal: f64) -> f64 {
-	let up = match decimal == 0.5 {
+fn significant_digits(value: f64, scale: u8) -> (u8, u8) {
+	if value.is_nan() || value.is_infinite() {
+		return (0, 0);
+	}
+	let x = (value * 10f64.powi(scale as i32 + 2)) as i64;
+	let y = ((x - x / 1000 * 1000).abs() / 10) as u8;
+	(y / 10, y % 10)
+}
+
+fn to_nearest(value: f64, scale: u8, digit: u8) -> f64 {
+	let up = match digit == 5 {
 		true => rand::random::<bool>(),
-		false => (value < 0.0) ^ (decimal > 0.5),
+		false => (value < 0.) ^ (digit > 5),
 	};
 	round(value, scale, up)
 }
 
 fn towards_zero(value: f64, scale: u8, towards: bool) -> f64 {
-	let decimal = decimal_after_scale(value, scale);
-	match decimal == 0.5 {
-		true => round(value, scale, (value < 0.0) ^ !towards),
-		false => to_nearest(value, scale, decimal),
+	let digits = significant_digits(value, scale);
+	match digits.1 == 5 {
+		true => round(value, scale, (value < 0.) ^ !towards),
+		false => to_nearest(value, scale, digits.1),
 	}
 }
 
 fn up_or_down(value: f64, scale: u8, up: bool) -> f64 {
-	let decimal = decimal_after_scale(value, scale);
-	match decimal == 0.5 {
+	let digit = significant_digits(value, scale);
+	match digit.1 == 5 {
 		true => round(value, scale, up),
-		false => to_nearest(value, scale, decimal),
+		false => to_nearest(value, scale, digit.1),
 	}
 }
 
 #[cfg(test)]
 mod tests {
 	use std::f64::{ NAN, INFINITY, NEG_INFINITY };
-	use std::f64::consts::PI;
 
 	#[test]
 	fn ceil() {
 		let tests = [
-			(-PI, 0, -3.0),
-			(-PI, 1, -3.1),
-			(-PI, 2, -3.14),
-			(-PI, 3, -3.141),
-			(-PI, 4, -3.1415),
-			(-PI, 5, -3.14159),
-			(-PI, 6, -3.141592),
-			(-PI, 7, -3.1415926),
-			(-PI, 8, -3.14159265),
-			(-PI, 9, -3.141592653),
+			(-1.03, 1, -1.),
+			(-1.05, 1, -1.),
+			(-1.07, 1, -1.),
+			(-1.13, 1, -1.1),
+			(-1.15, 1, -1.1),
+			(-1.17, 1, -1.1),
+			(-1.23, 1, -1.2),
+			(-1.25, 1, -1.2),
+			(-1.27, 1, -1.2),
+			(-1.33, 1, -1.3),
+			(-1.35, 1, -1.3),
+			(-1.37, 1, -1.3),
 
-			(PI, 0, 4.0),
-			(PI, 1, 3.2),
-			(PI, 2, 3.15),
-			(PI, 3, 3.142),
-			(PI, 4, 3.1416),
-			(PI, 5, 3.1416),
-			(PI, 6, 3.141593),
-			(PI, 7, 3.1415927),
-			(PI, 8, 3.14159266),
-			(PI, 9, 3.141592654),
+			(1.03, 1, 1.1),
+			(1.05, 1, 1.1),
+			(1.07, 1, 1.1),
+			(1.13, 1, 1.2),
+			(1.15, 1, 1.2),
+			(1.17, 1, 1.2),
+			(1.23, 1, 1.3),
+			(1.25, 1, 1.3),
+			(1.27, 1, 1.3),
+			(1.33, 1, 1.4),
+			(1.35, 1, 1.4),
+			(1.37, 1, 1.4),
 
-			(NAN, 0, NAN),
-			(NAN, 9, NAN),
-			(NEG_INFINITY, 0, NEG_INFINITY),
-			(NEG_INFINITY, 9, NEG_INFINITY),
-			(INFINITY, 0, INFINITY),
-			(INFINITY, 9, INFINITY),
+			(INFINITY, 1, INFINITY),
+			(NAN, 1, NAN),
+			(NEG_INFINITY, 1, NEG_INFINITY),
 		];
 
-		for test in &tests {
+		for test in tests.iter() {
 			let result = super::ceil(test.0, test.1);
 			match result.is_nan() {
 				true => assert_eq!(test.2.is_nan(), true),
@@ -302,116 +296,40 @@ mod tests {
 	}
 
 	#[test]
-	fn decimal_after_scale() {
-		let tests = [
-			(-1.1234567890, 0, 0.1),
-			(-1.1234567890, 1, 0.2),
-			(-1.1234567890, 2, 0.3),
-			(-1.1234567890, 3, 0.4),
-			(-1.1234567890, 4, 0.5),
-			(-1.1234567890, 5, 0.6),
-			(-1.1234567890, 6, 0.7),
-			(-1.1234567890, 7, 0.8),
-			(-1.1234567890, 8, 0.9),
-			(-1.1234567890, 9, 0.0),
-
-			(1.1234567890, 0, 0.1),
-			(1.1234567890, 1, 0.2),
-			(1.1234567890, 2, 0.3),
-			(1.1234567890, 3, 0.4),
-			(1.1234567890, 4, 0.5),
-			(1.1234567890, 5, 0.6),
-			(1.1234567890, 6, 0.7),
-			(1.1234567890, 7, 0.8),
-			(1.1234567890, 8, 0.9),
-			(1.1234567890, 9, 0.0),
-
-			(NAN, 0, NAN),
-			(NEG_INFINITY, 0, 0.),
-			(INFINITY, 0, 0.),
-		];
-
-		for test in &tests {
-			let result = super::decimal_after_scale(test.0, test.1);
-			match result.is_nan() {
-				true => assert_eq!(test.2.is_nan(), true),
-				false => assert_eq!(result, test.2),
-			}
-		}
-	}
-
-	#[test]
-	fn even_or_odd() {
-		let tests = [
-			(-2.5, 0, true, -2.0),
-			(-2.5, 0, false, -3.0),
-			(-1.4, 0, true, -1.0),
-			(-1.4, 0, false, -1.0),
-			(-1.5, 0, true, -2.0),
-			(-1.5, 0, false, -1.0),
-			(-1.6, 0, true, -2.0),
-			(-1.6, 0, false, -2.0),
-
-			(1.4, 0, true, 1.0),
-			(1.4, 0, false, 1.0),
-			(1.5, 0, true, 2.0),
-			(1.5, 0, false, 1.0),
-			(1.6, 0, true, 2.0),
-			(1.6, 0, false, 2.0),
-			(2.5, 0, true, 2.0),
-			(2.5, 0, false, 3.0),
-
-			(NAN, 0, true, NAN),
-			(NAN, 0, false, NAN),
-			(NEG_INFINITY, 0, true, NEG_INFINITY),
-			(NEG_INFINITY, 0, false, NEG_INFINITY),
-			(INFINITY, 0, true, INFINITY),
-			(INFINITY, 0, false, INFINITY),
-		];
-
-		for test in &tests {
-			let result = super::even_or_odd(test.0, test.1, test.2);
-			match result.is_nan() {
-				true => assert_eq!(test.3.is_nan(), true),
-				false => assert_eq!(result, test.3),
-			}
-		}
-	}
-
-	#[test]
 	fn floor() {
 		let tests = [
-			(-PI, 0, -4.0),
-			(-PI, 1, -3.2),
-			(-PI, 2, -3.15),
-			(-PI, 3, -3.142),
-			(-PI, 4, -3.1416),
-			(-PI, 5, -3.1416),
-			(-PI, 6, -3.141593),
-			(-PI, 7, -3.1415927),
-			(-PI, 8, -3.14159266),
-			(-PI, 9, -3.141592654),
+			(-1.03, 1, -1.1),
+			(-1.05, 1, -1.1),
+			(-1.07, 1, -1.1),
+			(-1.13, 1, -1.2),
+			(-1.15, 1, -1.2),
+			(-1.17, 1, -1.2),
+			(-1.23, 1, -1.3),
+			(-1.25, 1, -1.3),
+			(-1.27, 1, -1.3),
+			(-1.33, 1, -1.4),
+			(-1.35, 1, -1.4),
+			(-1.37, 1, -1.4),
 
-			(PI, 0, 3.0),
-			(PI, 1, 3.1),
-			(PI, 2, 3.14),
-			(PI, 3, 3.141),
-			(PI, 4, 3.1415),
-			(PI, 5, 3.14159),
-			(PI, 6, 3.141592),
-			(PI, 7, 3.1415926),
-			(PI, 8, 3.14159265),
-			(PI, 9, 3.141592653),
+			(1.03, 1, 1.),
+			(1.05, 1, 1.),
+			(1.07, 1, 1.),
+			(1.13, 1, 1.1),
+			(1.15, 1, 1.1),
+			(1.17, 1, 1.1),
+			(1.23, 1, 1.2),
+			(1.25, 1, 1.2),
+			(1.27, 1, 1.2),
+			(1.33, 1, 1.3),
+			(1.35, 1, 1.3),
+			(1.37, 1, 1.3),
 
-			(NAN, 0, NAN),
-			(NAN, 9, NAN),
-			(NEG_INFINITY, 0, NEG_INFINITY),
-			(NEG_INFINITY, 9, NEG_INFINITY),
-			(INFINITY, 0, INFINITY),
-			(INFINITY, 9, INFINITY),
+			(INFINITY, 1, INFINITY),
+			(NAN, 1, NAN),
+			(NEG_INFINITY, 1, NEG_INFINITY),
 		];
 
-		for test in &tests {
+		for test in tests.iter() {
 			let result = super::floor(test.0, test.1);
 			match result.is_nan() {
 				true => assert_eq!(test.2.is_nan(), true),
@@ -423,22 +341,38 @@ mod tests {
 	#[test]
 	fn half_away_from_zero() {
 		let tests = [
-			(-1.7, 0, -2.0),
-			(-1.5, 0, -2.0),
-			(-0.5, 0, -1.0),
-			(-0.2, 0, 0.0),
+			(-1.03, 1, -1.),
+			(-1.05, 1, -1.1),
+			(-1.07, 1, -1.1),
+			(-1.13, 1, -1.1),
+			(-1.15, 1, -1.2),
+			(-1.17, 1, -1.2),
+			(-1.23, 1, -1.2),
+			(-1.25, 1, -1.3),
+			(-1.27, 1, -1.3),
+			(-1.33, 1, -1.3),
+			(-1.35, 1, -1.4),
+			(-1.37, 1, -1.4),
 
-			(0.2, 0, 0.0),
-			(0.5, 0, 1.0),
-			(1.5, 0, 2.0),
-			(1.7, 0, 2.0),
+			(1.03, 1, 1.),
+			(1.05, 1, 1.1),
+			(1.07, 1, 1.1),
+			(1.13, 1, 1.1),
+			(1.15, 1, 1.2),
+			(1.17, 1, 1.2),
+			(1.23, 1, 1.2),
+			(1.25, 1, 1.3),
+			(1.27, 1, 1.3),
+			(1.33, 1, 1.3),
+			(1.35, 1, 1.4),
+			(1.37, 1, 1.4),
 
-			(NAN, 0, NAN),
-			(NEG_INFINITY, 0, NEG_INFINITY),
-			(INFINITY, 0, INFINITY),
+			(INFINITY, 1, INFINITY),
+			(NAN, 1, NAN),
+			(NEG_INFINITY, 1, NEG_INFINITY),
 		];
 
-		for test in &tests {
+		for test in tests.iter() {
 			let result = super::half_away_from_zero(test.0, test.1);
 			match result.is_nan() {
 				true => assert_eq!(test.2.is_nan(), true),
@@ -450,22 +384,38 @@ mod tests {
 	#[test]
 	fn half_down() {
 		let tests = [
-			(-1.7, 0, -2.0),
-			(-1.5, 0, -2.0),
-			(-0.5, 0, -1.0),
-			(-0.2, 0, 0.0),
+			(-1.03, 1, -1.),
+			(-1.05, 1, -1.1),
+			(-1.07, 1, -1.1),
+			(-1.13, 1, -1.1),
+			(-1.15, 1, -1.2),
+			(-1.17, 1, -1.2),
+			(-1.23, 1, -1.2),
+			(-1.25, 1, -1.3),
+			(-1.27, 1, -1.3),
+			(-1.33, 1, -1.3),
+			(-1.35, 1, -1.4),
+			(-1.37, 1, -1.4),
 
-			(0.2, 0, 0.0),
-			(0.5, 0, 0.0),
-			(1.5, 0, 1.0),
-			(1.7, 0, 2.0),
+			(1.03, 1, 1.),
+			(1.05, 1, 1.),
+			(1.07, 1, 1.1),
+			(1.13, 1, 1.1),
+			(1.15, 1, 1.1),
+			(1.17, 1, 1.2),
+			(1.23, 1, 1.2),
+			(1.25, 1, 1.2),
+			(1.27, 1, 1.3),
+			(1.33, 1, 1.3),
+			(1.35, 1, 1.3),
+			(1.37, 1, 1.4),
 
-			(NAN, 0, NAN),
-			(NEG_INFINITY, 0, NEG_INFINITY),
-			(INFINITY, 0, INFINITY),
+			(INFINITY, 1, INFINITY),
+			(NAN, 1, NAN),
+			(NEG_INFINITY, 1, NEG_INFINITY),
 		];
 
-		for test in &tests {
+		for test in tests.iter() {
 			let result = super::half_down(test.0, test.1);
 			match result.is_nan() {
 				true => assert_eq!(test.2.is_nan(), true),
@@ -477,22 +427,38 @@ mod tests {
 	#[test]
 	fn half_to_even() {
 		let tests = [
-			(-1.7, 0, -2.0),
-			(-1.5, 0, -2.0),
-			(-0.5, 0, -0.0),
-			(-0.2, 0, 0.0),
+			(-1.03, 1, -1.),
+			(-1.05, 1, -1.),
+			(-1.07, 1, -1.1),
+			(-1.13, 1, -1.1),
+			(-1.15, 1, -1.2),
+			(-1.17, 1, -1.2),
+			(-1.23, 1, -1.2),
+			(-1.25, 1, -1.2),
+			(-1.27, 1, -1.3),
+			(-1.33, 1, -1.3),
+			(-1.35, 1, -1.4),
+			(-1.37, 1, -1.4),
 
-			(0.2, 0, 0.0),
-			(0.5, 0, 0.0),
-			(1.5, 0, 2.0),
-			(1.7, 0, 2.0),
+			(1.03, 1, 1.),
+			(1.05, 1, 1.),
+			(1.07, 1, 1.1),
+			(1.13, 1, 1.1),
+			(1.15, 1, 1.2),
+			(1.17, 1, 1.2),
+			(1.23, 1, 1.2),
+			(1.25, 1, 1.2),
+			(1.27, 1, 1.3),
+			(1.33, 1, 1.3),
+			(1.35, 1, 1.4),
+			(1.37, 1, 1.4),
 
-			(NAN, 0, NAN),
-			(NEG_INFINITY, 0, NEG_INFINITY),
-			(INFINITY, 0, INFINITY),
+			(INFINITY, 1, INFINITY),
+			(NAN, 1, NAN),
+			(NEG_INFINITY, 1, NEG_INFINITY),
 		];
 
-		for test in &tests {
+		for test in tests.iter() {
 			let result = super::half_to_even(test.0, test.1);
 			match result.is_nan() {
 				true => assert_eq!(test.2.is_nan(), true),
@@ -504,22 +470,38 @@ mod tests {
 	#[test]
 	fn half_to_odd() {
 		let tests = [
-			(-1.7, 0, -2.0),
-			(-1.5, 0, -1.0),
-			(-0.5, 0, -1.0),
-			(-0.2, 0, 0.0),
+			(-1.03, 1, -1.),
+			(-1.05, 1, -1.1),
+			(-1.07, 1, -1.1),
+			(-1.13, 1, -1.1),
+			(-1.15, 1, -1.1),
+			(-1.17, 1, -1.2),
+			(-1.23, 1, -1.2),
+			(-1.25, 1, -1.3),
+			(-1.27, 1, -1.3),
+			(-1.33, 1, -1.3),
+			(-1.35, 1, -1.3),
+			(-1.37, 1, -1.4),
 
-			(0.2, 0, 0.0),
-			(0.5, 0, 1.0),
-			(1.5, 0, 1.0),
-			(1.7, 0, 2.0),
+			(1.03, 1, 1.),
+			(1.05, 1, 1.1),
+			(1.07, 1, 1.1),
+			(1.13, 1, 1.1),
+			(1.15, 1, 1.1),
+			(1.17, 1, 1.2),
+			(1.23, 1, 1.2),
+			(1.25, 1, 1.3),
+			(1.27, 1, 1.3),
+			(1.33, 1, 1.3),
+			(1.35, 1, 1.3),
+			(1.37, 1, 1.4),
 
-			(NAN, 0, NAN),
-			(NEG_INFINITY, 0, NEG_INFINITY),
-			(INFINITY, 0, INFINITY),
+			(INFINITY, 1, INFINITY),
+			(NAN, 1, NAN),
+			(NEG_INFINITY, 1, NEG_INFINITY),
 		];
 
-		for test in &tests {
+		for test in tests.iter() {
 			let result = super::half_to_odd(test.0, test.1);
 			match result.is_nan() {
 				true => assert_eq!(test.2.is_nan(), true),
@@ -531,22 +513,38 @@ mod tests {
 	#[test]
 	fn half_towards_zero() {
 		let tests = [
-			(-1.7, 0, -2.0),
-			(-1.5, 0, -1.0),
-			(-0.5, 0, -0.0),
-			(-0.2, 0, 0.0),
+			(-1.03, 1, -1.),
+			(-1.05, 1, -1.),
+			(-1.07, 1, -1.1),
+			(-1.13, 1, -1.1),
+			(-1.15, 1, -1.1),
+			(-1.17, 1, -1.2),
+			(-1.23, 1, -1.2),
+			(-1.25, 1, -1.2),
+			(-1.27, 1, -1.3),
+			(-1.33, 1, -1.3),
+			(-1.35, 1, -1.3),
+			(-1.37, 1, -1.4),
 
-			(0.2, 0, 0.0),
-			(0.5, 0, 0.0),
-			(1.5, 0, 1.0),
-			(1.7, 0, 2.0),
+			(1.03, 1, 1.),
+			(1.05, 1, 1.),
+			(1.07, 1, 1.1),
+			(1.13, 1, 1.1),
+			(1.15, 1, 1.1),
+			(1.17, 1, 1.2),
+			(1.23, 1, 1.2),
+			(1.25, 1, 1.2),
+			(1.27, 1, 1.3),
+			(1.33, 1, 1.3),
+			(1.35, 1, 1.3),
+			(1.37, 1, 1.4),
 
-			(NAN, 0, NAN),
-			(NEG_INFINITY, 0, NEG_INFINITY),
-			(INFINITY, 0, INFINITY),
+			(INFINITY, 1, INFINITY),
+			(NAN, 1, NAN),
+			(NEG_INFINITY, 1, NEG_INFINITY),
 		];
 
-		for test in &tests {
+		for test in tests.iter() {
 			let result = super::half_towards_zero(test.0, test.1);
 			match result.is_nan() {
 				true => assert_eq!(test.2.is_nan(), true),
@@ -558,22 +556,38 @@ mod tests {
 	#[test]
 	fn half_up() {
 		let tests = [
-			(-1.7, 0, -2.0),
-			(-1.5, 0, -1.0),
-			(-0.5, 0, -0.0),
-			(-0.2, 0, 0.0),
+			(-1.03, 1, -1.),
+			(-1.05, 1, -1.),
+			(-1.07, 1, -1.1),
+			(-1.13, 1, -1.1),
+			(-1.15, 1, -1.1),
+			(-1.17, 1, -1.2),
+			(-1.23, 1, -1.2),
+			(-1.25, 1, -1.2),
+			(-1.27, 1, -1.3),
+			(-1.33, 1, -1.3),
+			(-1.35, 1, -1.3),
+			(-1.37, 1, -1.4),
 
-			(0.2, 0, 0.0),
-			(0.5, 0, 1.0),
-			(1.5, 0, 2.0),
-			(1.7, 0, 2.0),
+			(1.03, 1, 1.),
+			(1.05, 1, 1.1),
+			(1.07, 1, 1.1),
+			(1.13, 1, 1.1),
+			(1.15, 1, 1.2),
+			(1.17, 1, 1.2),
+			(1.23, 1, 1.2),
+			(1.25, 1, 1.3),
+			(1.27, 1, 1.3),
+			(1.33, 1, 1.3),
+			(1.35, 1, 1.4),
+			(1.37, 1, 1.4),
 
-			(NAN, 0, NAN),
-			(NEG_INFINITY, 0, NEG_INFINITY),
-			(INFINITY, 0, INFINITY),
+			(INFINITY, 1, INFINITY),
+			(NAN, 1, NAN),
+			(NEG_INFINITY, 1, NEG_INFINITY),
 		];
 
-		for test in &tests {
+		for test in tests.iter() {
 			let result = super::half_up(test.0, test.1);
 			match result.is_nan() {
 				true => assert_eq!(test.2.is_nan(), true),
@@ -583,96 +597,42 @@ mod tests {
 	}
 
 	#[test]
-	fn round() {
+	fn significant_digits() {
 		let tests = [
-			(-1.4, 0, true, -1.0),
-			(-1.4, 0, false, -2.0),
-			(-1.5, 0, true, -1.0),
-			(-1.5, 0, false, -2.0),
-			(-1.6, 0, true, -1.0),
-			(-1.6, 0, false, -2.0),
+			(-1.1234567890, 0, (1, 1)),
+			(-1.1234567890, 1, (1, 2)),
+			(-1.1234567890, 2, (2, 3)),
+			(-1.1234567890, 3, (3, 4)),
+			(-1.1234567890, 4, (4, 5)),
+			(-1.1234567890, 5, (5, 6)),
+			(-1.1234567890, 6, (6, 7)),
+			(-1.1234567890, 7, (7, 8)),
+			(-1.1234567890, 8, (8, 9)),
+			(-1.1234567890, 9, (9, 0)),
 
-			(1.4, 0, true, 2.0),
-			(1.4, 0, false, 1.0),
-			(1.5, 0, true, 2.0),
-			(1.5, 0, false, 1.0),
-			(1.6, 0, true, 2.0),
-			(1.6, 0, false, 1.0),
+			(1.1234567890, 0, (1, 1)),
+			(1.1234567890, 1, (1, 2)),
+			(1.1234567890, 2, (2, 3)),
+			(1.1234567890, 3, (3, 4)),
+			(1.1234567890, 4, (4, 5)),
+			(1.1234567890, 5, (5, 6)),
+			(1.1234567890, 6, (6, 7)),
+			(1.1234567890, 7, (7, 8)),
+			(1.1234567890, 8, (8, 9)),
+			(1.1234567890, 9, (9, 0)),
 
-			(NAN, 0, true, NAN),
-			(NAN, 0, false, NAN),
-			(NEG_INFINITY, 0, true, NEG_INFINITY),
-			(NEG_INFINITY, 0, false, NEG_INFINITY),
-			(INFINITY, 0, true, INFINITY),
-			(INFINITY, 0, false, INFINITY),
+			(-1.15, 1, (1, 5)),
+			(1.15, 1, (1, 5)),
+			(1.9999, 3, (9, 9)),
+
+			(INFINITY, 1, (0, 0)),
+			(NAN, 1, (0, 0)),
+			(NEG_INFINITY, 1, (0, 0)),
 		];
 
-		for test in &tests {
-			let result = super::round(test.0, test.1, test.2);
-			match result.is_nan() {
-				true => assert_eq!(test.3.is_nan(), true),
-				false => assert_eq!(result, test.3),
-			}
-		}
-	}
-
-	#[test]
-	fn to_nearest() {
-		let tests = [
-			(-1.4, 0, 0.4, -1.0),
-			(-1.6, 0, 0.6, -2.0),
-
-			(1.4, 0, 0.4, 1.0),
-			(1.6, 0, 0.6, 2.0),
-
-			(NAN, 0, 0.4, NAN),
-			(NAN, 0, 0.6, NAN),
-			(NEG_INFINITY, 0, 0.4, NEG_INFINITY),
-			(NEG_INFINITY, 0, 0.6, NEG_INFINITY),
-			(INFINITY, 0, 0.4, INFINITY),
-			(INFINITY, 0, 0.6, INFINITY),
-		];
-
-		for test in &tests {
-			let result = super::to_nearest(test.0, test.1, test.2);
-			match result.is_nan() {
-				true => assert_eq!(test.3.is_nan(), true),
-				false => assert_eq!(result, test.3),
-			}
-		}
-	}
-
-	#[test]
-	fn towards_zero() {
-		let tests = [
-			(-1.4, 0, true, -1.0),
-			(-1.4, 0, false, -1.0),
-			(-1.5, 0, true, -1.0),
-			(-1.5, 0, false, -2.0),
-			(-1.6, 0, true, -2.0),
-			(-1.6, 0, false, -2.0),
-
-			(1.4, 0, true, 1.0),
-			(1.4, 0, false, 1.0),
-			(1.5, 0, true, 1.0),
-			(1.5, 0, false, 2.0),
-			(1.6, 0, true, 2.0),
-			(1.6, 0, false, 2.0),
-
-			(NAN, 0, true, NAN),
-			(NAN, 0, false, NAN),
-			(NEG_INFINITY, 0, true, NEG_INFINITY),
-			(NEG_INFINITY, 0, false, NEG_INFINITY),
-			(INFINITY, 0, true, INFINITY),
-			(INFINITY, 0, false, INFINITY),
-		];
-
-		for test in &tests {
-			let result = super::towards_zero(test.0, test.1, test.2);
-			match result.is_nan() {
-				true => assert_eq!(test.3.is_nan(), true),
-				false => assert_eq!(result, test.3),
-			}
+		for test in tests.iter() {
+			let result = super::significant_digits(test.0, test.1);
+			assert_eq!(result, test.2);
 		}
 	}
 }
