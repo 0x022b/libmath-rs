@@ -1,7 +1,6 @@
 //! Rounding functions
 
 extern crate rand;
-use std::f64::NAN;
 
 /// Round up.
 ///
@@ -198,28 +197,15 @@ pub fn half_up(value: f64, scale: u8) -> f64 {
 /// assert_eq!(rounded == 3.141 || rounded == 3.142, true);
 /// ```
 pub fn stochastic(value: f64, scale: u8) -> f64 {
-	let decimal = decimal_after_scale(value, scale);
-	to_nearest(value, scale, decimal)
-}
-
-fn decimal_after_scale(value: f64, scale: u8) -> f64 {
-	if value.is_nan() {
-		return NAN;
-	}
-	if value.is_infinite() {
-		return 0.;
-	}
-	let x = (value * 10i64.pow(scale as u32 + 1) as f64) as i64;
-	let y = (value * 10i64.pow(scale as u32) as f64) as i64 * 10;
-	((x - y).abs() as f64 / 10.0)
+	let digits = significant_digits(value, scale);
+	to_nearest(value, scale, digits.1)
 }
 
 fn even_or_odd(value: f64, scale: u8, even: bool) -> f64 {
-	let decimal = decimal_after_scale(value, scale);
-	match decimal == 0.5 {
-		true => round(value, scale,
-			(value < 0.0) ^ even ^ (value as i32 % 2 == 0)),
-		false => to_nearest(value, scale, decimal),
+	let digits = significant_digits(value, scale);
+	match digits.1 == 5 {
+		true => round(value, scale, (value < 0.) ^ even ^ (digits.0 % 2 == 0)),
+		false => to_nearest(value, scale, digits.1),
 	}
 }
 
@@ -230,27 +216,36 @@ fn round(value: f64, scale: u8, up: bool) -> f64 {
 	}
 }
 
-fn to_nearest(value: f64, scale: u8, decimal: f64) -> f64 {
-	let up = match decimal == 0.5 {
+fn significant_digits(value: f64, scale: u8) -> (u8, u8) {
+	if value.is_nan() || value.is_infinite() {
+		return (0, 0);
+	}
+	let x = (value * 10f64.powi(scale as i32 + 2)) as i64;
+	let y = ((x - x / 1000 * 1000).abs() / 10) as u8;
+	(y / 10, y % 10)
+}
+
+fn to_nearest(value: f64, scale: u8, digit: u8) -> f64 {
+	let up = match digit == 5 {
 		true => rand::random::<bool>(),
-		false => (value < 0.0) ^ (decimal > 0.5),
+		false => (value < 0.) ^ (digit > 5),
 	};
 	round(value, scale, up)
 }
 
 fn towards_zero(value: f64, scale: u8, towards: bool) -> f64 {
-	let decimal = decimal_after_scale(value, scale);
-	match decimal == 0.5 {
-		true => round(value, scale, (value < 0.0) ^ !towards),
-		false => to_nearest(value, scale, decimal),
+	let digits = significant_digits(value, scale);
+	match digits.1 == 5 {
+		true => round(value, scale, (value < 0.) ^ !towards),
+		false => to_nearest(value, scale, digits.1),
 	}
 }
 
 fn up_or_down(value: f64, scale: u8, up: bool) -> f64 {
-	let decimal = decimal_after_scale(value, scale);
-	match decimal == 0.5 {
+	let digit = significant_digits(value, scale);
+	match digit.1 == 5 {
 		true => round(value, scale, up),
-		false => to_nearest(value, scale, decimal),
+		false => to_nearest(value, scale, digit.1),
 	}
 }
 
@@ -599,6 +594,46 @@ mod tests {
 				true => assert_eq!(test.2.is_nan(), true),
 				false => assert_eq!(result, test.2),
 			}
+		}
+	}
+
+	#[test]
+	fn significant_digits() {
+		let tests = [
+			(-1.1234567890, 0, (1, 1)),
+			(-1.1234567890, 1, (1, 2)),
+			(-1.1234567890, 2, (2, 3)),
+			(-1.1234567890, 3, (3, 4)),
+			(-1.1234567890, 4, (4, 5)),
+			(-1.1234567890, 5, (5, 6)),
+			(-1.1234567890, 6, (6, 7)),
+			(-1.1234567890, 7, (7, 8)),
+			(-1.1234567890, 8, (8, 9)),
+			(-1.1234567890, 9, (9, 0)),
+
+			(1.1234567890, 0, (1, 1)),
+			(1.1234567890, 1, (1, 2)),
+			(1.1234567890, 2, (2, 3)),
+			(1.1234567890, 3, (3, 4)),
+			(1.1234567890, 4, (4, 5)),
+			(1.1234567890, 5, (5, 6)),
+			(1.1234567890, 6, (6, 7)),
+			(1.1234567890, 7, (7, 8)),
+			(1.1234567890, 8, (8, 9)),
+			(1.1234567890, 9, (9, 0)),
+
+			(-1.15, 1, (1, 5)),
+			(1.15, 1, (1, 5)),
+			(1.9999, 3, (9, 9)),
+
+			(INFINITY, 1, (0, 0)),
+			(NAN, 1, (0, 0)),
+			(NEG_INFINITY, 1, (0, 0)),
+		];
+
+		for test in tests.iter() {
+			let result = super::significant_digits(test.0, test.1);
+			assert_eq!(result, test.2);
 		}
 	}
 }
