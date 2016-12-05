@@ -241,10 +241,10 @@ fn towards_zero(value: f64, scale: u8, towards: bool) -> f64 {
 }
 
 fn up_or_down(value: f64, scale: u8, up: bool) -> f64 {
-	let digit = significant_digits(value, scale);
-	match digit.1 == 5 {
+	let digits = significant_digits(value, scale);
+	match digits.1 == 5 {
 		true => round(value, scale, up),
-		false => to_nearest(value, scale, digit.1),
+		false => to_nearest(value, scale, digits.1),
 	}
 }
 
