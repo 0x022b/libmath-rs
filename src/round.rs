@@ -3,14 +3,17 @@ extern crate rand;
 
 /// Round up.
 ///
-/// Round `value` up to `scale` number of decimal digits.
+/// Round `value` up to accuracy defined by `scale`.
+/// Positive `scale` defines the number of decimal digits in the result
+/// while negative `scale` rounds to a whole number and defines the number
+/// of trailing zeroes in the result.
 ///
 /// # Arguments
 ///
 /// * `value` - value to round
-/// * `scale` - number of decimal digits
+/// * `scale` - result accuracy
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use math::round;
@@ -18,21 +21,31 @@ extern crate rand;
 /// let rounded = round::ceil(3.14159, 3);
 /// assert_eq!(rounded, 3.142);
 /// ```
-pub fn ceil(value: f64, scale: u8) -> f64 {
-	let multiplier = 10i64.pow(scale as u32) as f64;
+///
+/// ```
+/// use math::round;
+///
+/// let rounded = round::ceil(3456., -2);
+/// assert_eq!(rounded, 3500.);
+/// ```
+pub fn ceil(value: f64, scale: i8) -> f64 {
+	let multiplier = 10f64.powi(scale as i32) as f64;
 	(value * multiplier).ceil() / multiplier
 }
 
 /// Round down.
 ///
-/// Round `value` down to `scale` number of decimal digits.
+/// Round `value` down to accuracy defined by `scale`.
+/// Positive `scale` defines the number of decimal digits in the result
+/// while negative `scale` rounds to a whole number and defines the number
+/// of trailing zeroes in the result.
 ///
 /// # Arguments
 ///
 /// * `value` - value to round
-/// * `scale` - number of decimal digits
+/// * `scale` - result accuracy
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use math::round;
@@ -40,22 +53,32 @@ pub fn ceil(value: f64, scale: u8) -> f64 {
 /// let rounded = round::floor(3.14159, 3);
 /// assert_eq!(rounded, 3.141);
 /// ```
-pub fn floor(value: f64, scale: u8) -> f64 {
-	let multiplier = 10i64.pow(scale as u32) as f64;
+///
+/// ```
+/// use math::round;
+///
+/// let rounded = round::floor(3456., -2);
+/// assert_eq!(rounded, 3400.);
+/// ```
+pub fn floor(value: f64, scale: i8) -> f64 {
+	let multiplier = 10f64.powi(scale as i32) as f64;
 	(value * multiplier).floor() / multiplier
 }
 
 /// Round half away from zero.
 ///
-/// Round `value` to `scale` number of decimal digits
+/// Round `value` to accuracy defined by `scale`
 /// rounding half away from zero.
+/// Positive `scale` defines the number of decimal digits in the result
+/// while negative `scale` rounds to a whole number and defines the number
+/// of trailing zeroes in the result.
 ///
 /// # Arguments
 ///
 /// * `value` - value to round
-/// * `scale` - number of decimal digits
+/// * `scale` - result accuracy
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use math::round;
@@ -63,21 +86,31 @@ pub fn floor(value: f64, scale: u8) -> f64 {
 /// let rounded = round::half_away_from_zero(3.14159, 3);
 /// assert_eq!(rounded, 3.142);
 /// ```
-pub fn half_away_from_zero(value: f64, scale: u8) -> f64 {
+///
+/// ```
+/// use math::round;
+///
+/// let rounded = round::half_away_from_zero(3456., -2);
+/// assert_eq!(rounded, 3500.);
+/// ```
+pub fn half_away_from_zero(value: f64, scale: i8) -> f64 {
 	towards_zero(value, scale, false)
 }
 
 /// Round half down.
 ///
-/// Round `value` to `scale` number of decimal digits
+/// Round `value` to accuracy defined by `scale`
 /// rounding half down.
+/// Positive `scale` defines the number of decimal digits in the result
+/// while negative `scale` rounds to a whole number and defines the number
+/// of trailing zeroes in the result.
 ///
 /// # Arguments
 ///
 /// * `value` - value to round
-/// * `scale` - number of decimal digits
+/// * `scale` - result accuracy
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use math::round;
@@ -85,21 +118,31 @@ pub fn half_away_from_zero(value: f64, scale: u8) -> f64 {
 /// let rounded = round::half_down(3.14159, 3);
 /// assert_eq!(rounded, 3.141);
 /// ```
-pub fn half_down(value: f64, scale: u8) -> f64 {
+///
+/// ```
+/// use math::round;
+///
+/// let rounded = round::half_down(3456., -2);
+/// assert_eq!(rounded, 3400.);
+/// ```
+pub fn half_down(value: f64, scale: i8) -> f64 {
 	up_or_down(value, scale, false)
 }
 
 /// Round half to nearest even number.
 ///
-/// Round `value` to `scale` number of decimal digits
+/// Round `value` to accuracy defined by `scale`
 /// rounding half to nearest even number.
+/// Positive `scale` defines the number of decimal digits in the result
+/// while negative `scale` rounds to a whole number and defines the number
+/// of trailing zeroes in the result.
 ///
 /// # Arguments
 ///
 /// * `value` - value to round
-/// * `scale` - number of decimal digits
+/// * `scale` - result accuracy
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use math::round;
@@ -107,21 +150,31 @@ pub fn half_down(value: f64, scale: u8) -> f64 {
 /// let rounded = round::half_to_even(3.14159, 3);
 /// assert_eq!(rounded, 3.142);
 /// ```
-pub fn half_to_even(value: f64, scale: u8) -> f64 {
+///
+/// ```
+/// use math::round;
+///
+/// let rounded = round::half_to_even(3456., -2);
+/// assert_eq!(rounded, 3400.);
+/// ```
+pub fn half_to_even(value: f64, scale: i8) -> f64 {
 	even_or_odd(value, scale, true)
 }
 
 /// Round half to nearest odd number.
 ///
-/// Round `value` to `scale` number of decimal digits
+/// Round `value` to accuracy defined by `scale`
 /// rounding half to nearest odd number.
+/// Positive `scale` defines the number of decimal digits in the result
+/// while negative `scale` rounds to a whole number and defines the number
+/// of trailing zeroes in the result.
 ///
 /// # Arguments
 ///
 /// * `value` - value to round
-/// * `scale` - number of decimal digits
+/// * `scale` - result accuracy
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use math::round;
@@ -129,21 +182,31 @@ pub fn half_to_even(value: f64, scale: u8) -> f64 {
 /// let rounded = round::half_to_odd(3.14159, 3);
 /// assert_eq!(rounded, 3.141);
 /// ```
-pub fn half_to_odd(value: f64, scale: u8) -> f64 {
+///
+/// ```
+/// use math::round;
+///
+/// let rounded = round::half_to_odd(3456., -2);
+/// assert_eq!(rounded, 3500.);
+/// ```
+pub fn half_to_odd(value: f64, scale: i8) -> f64 {
 	even_or_odd(value, scale, false)
 }
 
 /// Round half towards zero.
 ///
-/// Round `value` to `scale` number of decimal digits
+/// Round `value` to accuracy defined by `scale`
 /// rounding half towards zero.
+/// Positive `scale` defines the number of decimal digits in the result
+/// while negative `scale` rounds to a whole number and defines the number
+/// of trailing zeroes in the result.
 ///
 /// # Arguments
 ///
 /// * `value` - value to round
-/// * `scale` - number of decimal digits
+/// * `scale` - result accuracy
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use math::round;
@@ -151,21 +214,31 @@ pub fn half_to_odd(value: f64, scale: u8) -> f64 {
 /// let rounded = round::half_towards_zero(3.14159, 3);
 /// assert_eq!(rounded, 3.141);
 /// ```
-pub fn half_towards_zero(value: f64, scale: u8) -> f64 {
+///
+/// ```
+/// use math::round;
+///
+/// let rounded = round::half_towards_zero(3456., -2);
+/// assert_eq!(rounded, 3400.);
+/// ```
+pub fn half_towards_zero(value: f64, scale: i8) -> f64 {
 	towards_zero(value, scale, true)
 }
 
 /// Round half up.
 ///
-/// Round `value` to `scale` number of decimal digits
+/// Round `value` to accuracy defined by `scale`
 /// rounding half up.
+/// Positive `scale` defines the number of decimal digits in the result
+/// while negative `scale` rounds to a whole number and defines the number
+/// of trailing zeroes in the result.
 ///
 /// # Arguments
 ///
 /// * `value` - value to round
-/// * `scale` - number of decimal digits
+/// * `scale` - result accuracy
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use math::round;
@@ -173,21 +246,31 @@ pub fn half_towards_zero(value: f64, scale: u8) -> f64 {
 /// let rounded = round::half_up(3.14159, 3);
 /// assert_eq!(rounded, 3.142);
 /// ```
-pub fn half_up(value: f64, scale: u8) -> f64 {
+///
+/// ```
+/// use math::round;
+///
+/// let rounded = round::half_up(3456., -2);
+/// assert_eq!(rounded, 3500.);
+/// ```
+pub fn half_up(value: f64, scale: i8) -> f64 {
 	up_or_down(value, scale, true)
 }
 
 /// Round half randomly up or down.
 ///
-/// Round `value` to `scale` number of decimal digits
+/// Round `value` to accuracy defined by `scale`
 /// rounding half randomly up or down.
+/// Positive `scale` defines the number of decimal digits in the result
+/// while negative `scale` rounds to a whole number and defines the number
+/// of trailing zeroes in the result.
 ///
 /// # Arguments
 ///
 /// * `value` - value to round
-/// * `scale` - number of decimal digits
+/// * `scale` - result accuracy
 ///
-/// # Example
+/// # Examples
 ///
 /// ```
 /// use math::round;
@@ -195,12 +278,19 @@ pub fn half_up(value: f64, scale: u8) -> f64 {
 /// let rounded = round::stochastic(3.14159, 3);
 /// assert_eq!(rounded == 3.141 || rounded == 3.142, true);
 /// ```
-pub fn stochastic(value: f64, scale: u8) -> f64 {
+///
+/// ```
+/// use math::round;
+///
+/// let rounded = round::stochastic(3456., -2);
+/// assert_eq!(rounded == 3400. || rounded == 3500., true);
+/// ```
+pub fn stochastic(value: f64, scale: i8) -> f64 {
 	let digits = significant_digits(value, scale);
 	to_nearest(value, scale, digits.1)
 }
 
-fn even_or_odd(value: f64, scale: u8, even: bool) -> f64 {
+fn even_or_odd(value: f64, scale: i8, even: bool) -> f64 {
 	let digits = significant_digits(value, scale);
 	match digits.1 == 5 {
 		true => round(value, scale, (value < 0.) ^ even ^ (digits.0 % 2 == 0)),
@@ -208,14 +298,14 @@ fn even_or_odd(value: f64, scale: u8, even: bool) -> f64 {
 	}
 }
 
-fn round(value: f64, scale: u8, up: bool) -> f64 {
+fn round(value: f64, scale: i8, up: bool) -> f64 {
 	match up {
 		true => ceil(value, scale),
 		false => floor(value, scale),
 	}
 }
 
-fn significant_digits(value: f64, scale: u8) -> (u8, u8) {
+fn significant_digits(value: f64, scale: i8) -> (u8, u8) {
 	if value.is_nan() || value.is_infinite() {
 		return (0, 0);
 	}
@@ -224,7 +314,7 @@ fn significant_digits(value: f64, scale: u8) -> (u8, u8) {
 	(y / 10, y % 10)
 }
 
-fn to_nearest(value: f64, scale: u8, digit: u8) -> f64 {
+fn to_nearest(value: f64, scale: i8, digit: u8) -> f64 {
 	let up = match digit == 5 {
 		true => rand::random::<bool>(),
 		false => (value < 0.) ^ (digit > 5),
@@ -232,7 +322,7 @@ fn to_nearest(value: f64, scale: u8, digit: u8) -> f64 {
 	round(value, scale, up)
 }
 
-fn towards_zero(value: f64, scale: u8, towards: bool) -> f64 {
+fn towards_zero(value: f64, scale: i8, towards: bool) -> f64 {
 	let digits = significant_digits(value, scale);
 	match digits.1 == 5 {
 		true => round(value, scale, (value < 0.) ^ !towards),
@@ -240,7 +330,7 @@ fn towards_zero(value: f64, scale: u8, towards: bool) -> f64 {
 	}
 }
 
-fn up_or_down(value: f64, scale: u8, up: bool) -> f64 {
+fn up_or_down(value: f64, scale: i8, up: bool) -> f64 {
 	let digits = significant_digits(value, scale);
 	match digits.1 == 5 {
 		true => round(value, scale, up),
@@ -257,7 +347,7 @@ mod tests {
 		$(
 			#[test]
 			fn $name() {
-				let (value, scale, expected): (f64, u8, f64) = $params;
+				let (value, scale, expected): (f64, i8, f64) = $params;
 				let result = $func(value, scale);
 				match result.is_nan() {
 					true => assert_eq!(expected.is_nan(), true),
@@ -273,7 +363,7 @@ mod tests {
 		$(
 			#[test]
 			fn $name() {
-				let (value, scale, expected): (f64, u8, (u8, u8)) = $params;
+				let (value, scale, expected): (f64, i8, (u8, u8)) = $params;
 				assert_eq!($func(value, scale), expected);
 			}
 		)*
@@ -308,6 +398,33 @@ mod tests {
 		ceil_25: (INFINITY, 1, INFINITY),
 		ceil_26: (NAN, 1, NAN),
 		ceil_27: (NEG_INFINITY, 1, NEG_INFINITY),
+		ceil_28: (-103., -1, -100.),
+		ceil_29: (-105., -1, -100.),
+		ceil_30: (-107., -1, -100.),
+		ceil_31: (-113., -1, -110.),
+		ceil_32: (-115., -1, -110.),
+		ceil_33: (-117., -1, -110.),
+		ceil_34: (-123., -1, -120.),
+		ceil_35: (-125., -1, -120.),
+		ceil_36: (-127., -1, -120.),
+		ceil_37: (-133., -1, -130.),
+		ceil_38: (-135., -1, -130.),
+		ceil_39: (-137., -1, -130.),
+		ceil_40: (103., -1, 110.),
+		ceil_41: (105., -1, 110.),
+		ceil_42: (107., -1, 110.),
+		ceil_43: (113., -1, 120.),
+		ceil_44: (115., -1, 120.),
+		ceil_45: (117., -1, 120.),
+		ceil_46: (123., -1, 130.),
+		ceil_47: (125., -1, 130.),
+		ceil_48: (127., -1, 130.),
+		ceil_49: (133., -1, 140.),
+		ceil_50: (135., -1, 140.),
+		ceil_51: (137., -1, 140.),
+		ceil_52: (INFINITY, -1, INFINITY),
+		ceil_53: (NAN, -1, NAN),
+		ceil_54: (NEG_INFINITY, -1, NEG_INFINITY),
 	]}
 
 	test_round! { super::floor [
@@ -338,6 +455,33 @@ mod tests {
 		floor_25: (INFINITY, 1, INFINITY),
 		floor_26: (NAN, 1, NAN),
 		floor_27: (NEG_INFINITY, 1, NEG_INFINITY),
+		floor_28: (-103., -1, -110.),
+		floor_29: (-105., -1, -110.),
+		floor_30: (-107., -1, -110.),
+		floor_31: (-113., -1, -120.),
+		floor_32: (-115., -1, -120.),
+		floor_33: (-117., -1, -120.),
+		floor_34: (-123., -1, -130.),
+		floor_35: (-125., -1, -130.),
+		floor_36: (-127., -1, -130.),
+		floor_37: (-133., -1, -140.),
+		floor_38: (-135., -1, -140.),
+		floor_39: (-137., -1, -140.),
+		floor_40: (103., -1, 100.),
+		floor_41: (105., -1, 100.),
+		floor_42: (107., -1, 100.),
+		floor_43: (113., -1, 110.),
+		floor_44: (115., -1, 110.),
+		floor_45: (117., -1, 110.),
+		floor_46: (123., -1, 120.),
+		floor_47: (125., -1, 120.),
+		floor_48: (127., -1, 120.),
+		floor_49: (133., -1, 130.),
+		floor_50: (135., -1, 130.),
+		floor_51: (137., -1, 130.),
+		floor_52: (INFINITY, -1, INFINITY),
+		floor_53: (NAN, -1, NAN),
+		floor_54: (NEG_INFINITY, -1, NEG_INFINITY),
 	]}
 
 	test_round! { super::half_away_from_zero [
@@ -368,6 +512,33 @@ mod tests {
 		half_away_from_zero_25: (INFINITY, 1, INFINITY),
 		half_away_from_zero_26: (NAN, 1, NAN),
 		half_away_from_zero_27: (NEG_INFINITY, 1, NEG_INFINITY),
+		half_away_from_zero_28: (-103., -1, -100.),
+		half_away_from_zero_29: (-105., -1, -110.),
+		half_away_from_zero_30: (-107., -1, -110.),
+		half_away_from_zero_31: (-113., -1, -110.),
+		half_away_from_zero_32: (-115., -1, -120.),
+		half_away_from_zero_33: (-117., -1, -120.),
+		half_away_from_zero_34: (-123., -1, -120.),
+		half_away_from_zero_35: (-125., -1, -130.),
+		half_away_from_zero_36: (-127., -1, -130.),
+		half_away_from_zero_37: (-133., -1, -130.),
+		half_away_from_zero_38: (-135., -1, -140.),
+		half_away_from_zero_39: (-137., -1, -140.),
+		half_away_from_zero_40: (103., -1, 100.),
+		half_away_from_zero_41: (105., -1, 110.),
+		half_away_from_zero_42: (107., -1, 110.),
+		half_away_from_zero_43: (113., -1, 110.),
+		half_away_from_zero_44: (115., -1, 120.),
+		half_away_from_zero_45: (117., -1, 120.),
+		half_away_from_zero_46: (123., -1, 120.),
+		half_away_from_zero_47: (125., -1, 130.),
+		half_away_from_zero_48: (127., -1, 130.),
+		half_away_from_zero_49: (133., -1, 130.),
+		half_away_from_zero_50: (135., -1, 140.),
+		half_away_from_zero_51: (137., -1, 140.),
+		half_away_from_zero_52: (INFINITY, -1, INFINITY),
+		half_away_from_zero_53: (NAN, -1, NAN),
+		half_away_from_zero_54: (NEG_INFINITY, -1, NEG_INFINITY),
 	]}
 
 	test_round! { super::half_down [
@@ -398,6 +569,33 @@ mod tests {
 		half_down_25: (INFINITY, 1, INFINITY),
 		half_down_26: (NAN, 1, NAN),
 		half_down_27: (NEG_INFINITY, 1, NEG_INFINITY),
+		half_down_28: (-103., -1, -100.),
+		half_down_29: (-105., -1, -110.),
+		half_down_30: (-107., -1, -110.),
+		half_down_31: (-113., -1, -110.),
+		half_down_32: (-115., -1, -120.),
+		half_down_33: (-117., -1, -120.),
+		half_down_34: (-123., -1, -120.),
+		half_down_35: (-125., -1, -130.),
+		half_down_36: (-127., -1, -130.),
+		half_down_37: (-133., -1, -130.),
+		half_down_38: (-135., -1, -140.),
+		half_down_39: (-137., -1, -140.),
+		half_down_40: (103., -1, 100.),
+		half_down_41: (105., -1, 100.),
+		half_down_42: (107., -1, 110.),
+		half_down_43: (113., -1, 110.),
+		half_down_44: (115., -1, 110.),
+		half_down_45: (117., -1, 120.),
+		half_down_46: (123., -1, 120.),
+		half_down_47: (125., -1, 120.),
+		half_down_48: (127., -1, 130.),
+		half_down_49: (133., -1, 130.),
+		half_down_50: (135., -1, 130.),
+		half_down_51: (137., -1, 140.),
+		half_down_52: (INFINITY, -1, INFINITY),
+		half_down_53: (NAN, -1, NAN),
+		half_down_54: (NEG_INFINITY, -1, NEG_INFINITY),
 	]}
 
 	test_round! { super::half_to_even [
@@ -429,6 +627,33 @@ mod tests {
 		half_to_even_26: (NAN, 1, NAN),
 		half_to_even_27: (NEG_INFINITY, 1, NEG_INFINITY),
 		half_to_even_28: (2.221000, 3, 2.221),
+		half_to_even_29: (-103., -1, -100.),
+		half_to_even_30: (-105., -1, -100.),
+		half_to_even_31: (-107., -1, -110.),
+		half_to_even_32: (-113., -1, -110.),
+		half_to_even_33: (-115., -1, -120.),
+		half_to_even_34: (-117., -1, -120.),
+		half_to_even_35: (-123., -1, -120.),
+		half_to_even_36: (-125., -1, -120.),
+		half_to_even_37: (-127., -1, -130.),
+		half_to_even_38: (-133., -1, -130.),
+		half_to_even_39: (-135., -1, -140.),
+		half_to_even_40: (-137., -1, -140.),
+		half_to_even_41: (103., -1, 100.),
+		half_to_even_42: (105., -1, 100.),
+		half_to_even_43: (107., -1, 110.),
+		half_to_even_44: (113., -1, 110.),
+		half_to_even_45: (115., -1, 120.),
+		half_to_even_46: (117., -1, 120.),
+		half_to_even_47: (123., -1, 120.),
+		half_to_even_48: (125., -1, 120.),
+		half_to_even_49: (127., -1, 130.),
+		half_to_even_50: (133., -1, 130.),
+		half_to_even_51: (135., -1, 140.),
+		half_to_even_52: (137., -1, 140.),
+		half_to_even_53: (INFINITY, -1, INFINITY),
+		half_to_even_54: (NAN, -1, NAN),
+		half_to_even_55: (NEG_INFINITY, -1, NEG_INFINITY),
 	]}
 
 	test_round! { super::half_to_odd [
@@ -459,6 +684,33 @@ mod tests {
 		half_to_odd_25: (INFINITY, 1, INFINITY),
 		half_to_odd_26: (NAN, 1, NAN),
 		half_to_odd_27: (NEG_INFINITY, 1, NEG_INFINITY),
+		half_to_odd_28: (-103., -1, -100.),
+		half_to_odd_29: (-105., -1, -110.),
+		half_to_odd_30: (-107., -1, -110.),
+		half_to_odd_31: (-113., -1, -110.),
+		half_to_odd_32: (-115., -1, -110.),
+		half_to_odd_33: (-117., -1, -120.),
+		half_to_odd_34: (-123., -1, -120.),
+		half_to_odd_35: (-125., -1, -130.),
+		half_to_odd_36: (-127., -1, -130.),
+		half_to_odd_37: (-133., -1, -130.),
+		half_to_odd_38: (-135., -1, -130.),
+		half_to_odd_39: (-137., -1, -140.),
+		half_to_odd_40: (103., -1, 100.),
+		half_to_odd_41: (105., -1, 110.),
+		half_to_odd_42: (107., -1, 110.),
+		half_to_odd_43: (113., -1, 110.),
+		half_to_odd_44: (115., -1, 110.),
+		half_to_odd_45: (117., -1, 120.),
+		half_to_odd_46: (123., -1, 120.),
+		half_to_odd_47: (125., -1, 130.),
+		half_to_odd_48: (127., -1, 130.),
+		half_to_odd_49: (133., -1, 130.),
+		half_to_odd_50: (135., -1, 130.),
+		half_to_odd_51: (137., -1, 140.),
+		half_to_odd_52: (INFINITY, -1, INFINITY),
+		half_to_odd_53: (NAN, -1, NAN),
+		half_to_odd_54: (NEG_INFINITY, -1, NEG_INFINITY),
 	]}
 
 	test_round! { super::half_towards_zero [
@@ -489,6 +741,33 @@ mod tests {
 		half_towards_zero_25: (INFINITY, 1, INFINITY),
 		half_towards_zero_26: (NAN, 1, NAN),
 		half_towards_zero_27: (NEG_INFINITY, 1, NEG_INFINITY),
+		half_towards_zero_28: (-103., -1, -100.),
+		half_towards_zero_29: (-105., -1, -100.),
+		half_towards_zero_30: (-107., -1, -110.),
+		half_towards_zero_31: (-113., -1, -110.),
+		half_towards_zero_32: (-115., -1, -110.),
+		half_towards_zero_33: (-117., -1, -120.),
+		half_towards_zero_34: (-123., -1, -120.),
+		half_towards_zero_35: (-125., -1, -120.),
+		half_towards_zero_36: (-127., -1, -130.),
+		half_towards_zero_37: (-133., -1, -130.),
+		half_towards_zero_38: (-135., -1, -130.),
+		half_towards_zero_39: (-137., -1, -140.),
+		half_towards_zero_40: (103., -1, 100.),
+		half_towards_zero_41: (105., -1, 100.),
+		half_towards_zero_42: (107., -1, 110.),
+		half_towards_zero_43: (113., -1, 110.),
+		half_towards_zero_44: (115., -1, 110.),
+		half_towards_zero_45: (117., -1, 120.),
+		half_towards_zero_46: (123., -1, 120.),
+		half_towards_zero_47: (125., -1, 120.),
+		half_towards_zero_48: (127., -1, 130.),
+		half_towards_zero_49: (133., -1, 130.),
+		half_towards_zero_50: (135., -1, 130.),
+		half_towards_zero_51: (137., -1, 140.),
+		half_towards_zero_52: (INFINITY, -1, INFINITY),
+		half_towards_zero_53: (NAN, -1, NAN),
+		half_towards_zero_54: (NEG_INFINITY, -1, NEG_INFINITY),
 	]}
 
 	test_round! { super::half_up [
@@ -519,6 +798,33 @@ mod tests {
 		half_up_25: (INFINITY, 1, INFINITY),
 		half_up_26: (NAN, 1, NAN),
 		half_up_27: (NEG_INFINITY, 1, NEG_INFINITY),
+		half_up_28: (-103., -1, -100.),
+		half_up_29: (-105., -1, -100.),
+		half_up_30: (-107., -1, -110.),
+		half_up_31: (-113., -1, -110.),
+		half_up_32: (-115., -1, -110.),
+		half_up_33: (-117., -1, -120.),
+		half_up_34: (-123., -1, -120.),
+		half_up_35: (-125., -1, -120.),
+		half_up_36: (-127., -1, -130.),
+		half_up_37: (-133., -1, -130.),
+		half_up_38: (-135., -1, -130.),
+		half_up_39: (-137., -1, -140.),
+		half_up_40: (103., -1, 100.),
+		half_up_41: (105., -1, 110.),
+		half_up_42: (107., -1, 110.),
+		half_up_43: (113., -1, 110.),
+		half_up_44: (115., -1, 120.),
+		half_up_45: (117., -1, 120.),
+		half_up_46: (123., -1, 120.),
+		half_up_47: (125., -1, 130.),
+		half_up_48: (127., -1, 130.),
+		half_up_49: (133., -1, 130.),
+		half_up_50: (135., -1, 140.),
+		half_up_51: (137., -1, 140.),
+		half_up_52: (INFINITY, -1, INFINITY),
+		half_up_53: (NAN, -1, NAN),
+		half_up_54: (NEG_INFINITY, -1, NEG_INFINITY),
 	]}
 
 	test_digits! { super::significant_digits [
@@ -548,5 +854,28 @@ mod tests {
 		significant_digits_24: (INFINITY, 1, (0, 0)),
 		significant_digits_25: (NAN, 1, (0, 0)),
 		significant_digits_26: (NEG_INFINITY, 1, (0, 0)),
+		significant_digits_27: (-1234567890., 0, (0, 0)),
+		significant_digits_28: (-1234567890., -1, (9, 0)),
+		significant_digits_29: (-1234567890., -2, (8, 9)),
+		significant_digits_30: (-1234567890., -3, (7, 8)),
+		significant_digits_31: (-1234567890., -4, (6, 7)),
+		significant_digits_32: (-1234567890., -5, (5, 6)),
+		significant_digits_33: (-1234567890., -6, (4, 5)),
+		significant_digits_34: (-1234567890., -7, (3, 4)),
+		significant_digits_35: (-1234567890., -8, (2, 3)),
+		significant_digits_36: (-1234567890., -9, (1, 2)),
+		significant_digits_37: (1234567890., 0, (0, 0)),
+		significant_digits_38: (1234567890., -1, (9, 0)),
+		significant_digits_39: (1234567890., -2, (8, 9)),
+		significant_digits_40: (1234567890., -3, (7, 8)),
+		significant_digits_41: (1234567890., -4, (6, 7)),
+		significant_digits_42: (1234567890., -5, (5, 6)),
+		significant_digits_43: (1234567890., -6, (4, 5)),
+		significant_digits_44: (1234567890., -7, (3, 4)),
+		significant_digits_45: (1234567890., -8, (2, 3)),
+		significant_digits_46: (1234567890., -9, (1, 2)),
+		significant_digits_47: (INFINITY, -1, (0, 0)),
+		significant_digits_48: (NAN, -1, (0, 0)),
+		significant_digits_49: (NEG_INFINITY, -1, (0, 0)),
 	]}
 }
