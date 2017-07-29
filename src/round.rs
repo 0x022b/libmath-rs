@@ -309,9 +309,17 @@ fn significant_digits(value: f64, scale: i8) -> (u8, u8) {
 	if value.is_nan() || value.is_infinite() {
 		return (0, 0);
 	}
-	let x = (value * 10f64.powi(scale as i32 + 2)) as i64;
-	let y = ((x - x / 1000 * 1000).abs() / 10) as u8;
-	(y / 10, y % 10)
+	let v = value.abs();
+	let m = 10f64.powi(scale as i32 + 2);
+	let f = 10f64.powi(-1 * (scale as i32 + 1));
+	let a = (v * m) as i64;
+	let b = ((v + f) * m) as i64;
+	let c = ((v - f) * m) as i64;
+	let r = match b - a > a - c {
+		true => a / 10 + 1,
+		false => a / 10,
+	};
+	((r / 10 % 10) as u8, (r % 10) as u8)
 }
 
 fn to_nearest(value: f64, scale: i8, digit: u8) -> f64 {
