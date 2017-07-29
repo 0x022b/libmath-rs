@@ -1,6 +1,6 @@
 [package]
 name = "libmath"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Janne K <0x022b@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/scoobadog/libmath-rs"
